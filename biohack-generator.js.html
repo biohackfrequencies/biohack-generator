@@ -1,0 +1,183 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2487.6">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">const canvas = document.getElementById('canvas');</p>
+<p class="p1">const gl = canvas.getContext('webgl');</p>
+<p class="p1">const frequencyInput = document.getElementById('frequency');</p>
+<p class="p1">const startButton = document.getElementById('start');</p>
+<p class="p1">const stopButton = document.getElementById('stop');</p>
+<p class="p2"><br></p>
+<p class="p1">function resizeCanvas() {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>canvas.width = window.innerWidth;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>canvas.height = window.innerHeight;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>gl.viewport(0, 0, canvas.width, canvas.height);</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">window.addEventListener('resize', resizeCanvas);</p>
+<p class="p1">resizeCanvas();</p>
+<p class="p2"><br></p>
+<p class="p1">// Vertex shader program</p>
+<p class="p1">const vsSource = `</p>
+<p class="p1"><span class="Apple-converted-space">    </span>attribute vec4 aVertexPosition;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>uniform mat4 uModelViewMatrix;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>uniform mat4 uProjectionMatrix;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>void main(void) {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1">`;</p>
+<p class="p2"><br></p>
+<p class="p1">// Fragment shader program</p>
+<p class="p1">const fsSource = `</p>
+<p class="p1"><span class="Apple-converted-space">    </span>void main(void) {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1">`;</p>
+<p class="p2"><br></p>
+<p class="p1">// Initialize shader program</p>
+<p class="p1">function initShaderProgram(gl, vsSource, fsSource) {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>const shaderProgram = gl.createProgram();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>gl.attachShader(shaderProgram, vertexShader);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>gl.attachShader(shaderProgram, fragmentShader);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>gl.linkProgram(shaderProgram);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>console.error('Unable to initialize the shader program:', gl.getProgramInfoLog(shaderProgram));</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return null;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>return shaderProgram;</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">function loadShader(gl, type, source) {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const shader = gl.createShader(type);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>gl.shaderSource(shader, source);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>gl.compileShader(shader);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>console.error('An error occurred compiling the shaders:', gl.getShaderInfoLog(shader));</p>
+<p class="p1"><span class="Apple-converted-space">        </span>gl.deleteShader(shader);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return null;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>return shader;</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">const shaderProgram = initShaderProgram(gl, vsSource, fsSource);</p>
+<p class="p1">const programInfo = {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>program: shaderProgram,</p>
+<p class="p1"><span class="Apple-converted-space">    </span>attribLocations: {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),</p>
+<p class="p1"><span class="Apple-converted-space">    </span>},</p>
+<p class="p1"><span class="Apple-converted-space">    </span>uniformLocations: {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),</p>
+<p class="p1"><span class="Apple-converted-space">        </span>modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),</p>
+<p class="p1"><span class="Apple-converted-space">    </span>},</p>
+<p class="p1">};</p>
+<p class="p2"><br></p>
+<p class="p1">// Set up buffers</p>
+<p class="p1">const buffers = initBuffers(gl);</p>
+<p class="p2"><br></p>
+<p class="p1">function initBuffers(gl) {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const positions = [</p>
+<p class="p1"><span class="Apple-converted-space">        </span>-1.0, -1.0,</p>
+<p class="p1"><span class="Apple-converted-space">         </span>1.0, -1.0,</p>
+<p class="p1"><span class="Apple-converted-space">         </span>1.0,<span class="Apple-converted-space">  </span>1.0,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>-1.0,<span class="Apple-converted-space">  </span>1.0,</p>
+<p class="p1"><span class="Apple-converted-space">    </span>];</p>
+<p class="p2"><span class="Apple-converted-space">    </span></p>
+<p class="p1"><span class="Apple-converted-space">    </span>const positionBuffer = gl.createBuffer();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);</p>
+<p class="p2"><span class="Apple-converted-space">    </span></p>
+<p class="p1"><span class="Apple-converted-space">    </span>return { position: positionBuffer };</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">function drawScene(gl, programInfo, buffers) {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>gl.clearColor(0.0, 0.0, 0.0, 1.0);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>gl.clearDepth(1.0);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>gl.enable(gl.DEPTH_TEST);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>gl.depthFunc(gl.LEQUAL);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>const fieldOfView = 45 * Math.PI / 180;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const zNear = 0.1;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const zFar = 100.0;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const projectionMatrix = mat4.create();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>const modelViewMatrix = mat4.create();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>mat4.translate(modelViewMatrix, modelViewMatrix, [-0.0, 0.0, -6.0]);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>{</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const numComponents = 2;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const type = gl.FLOAT;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const normalize = false;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const stride = 0;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const offset = 0;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>gl.vertexAttribPointer(programInfo.attribLocations.vertexPosition, numComponents, type, normalize, stride, offset);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>gl.useProgram(programInfo.program);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>{</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const offset = 0;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const vertexCount = 4;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">let audioCtx;</p>
+<p class="p1">let oscillator;</p>
+<p class="p2"><br></p>
+<p class="p1">function startTone(frequency) {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if (!audioCtx) {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>audioCtx = new (window.AudioContext || window.webkitAudioContext)();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>oscillator = audioCtx.createOscillator();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>oscillator.type = 'sine';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>oscillator.connect(audioCtx.destination);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>oscillator.start();</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">function stopTone() {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if (oscillator) {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>oscillator.stop();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>oscillator.disconnect();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">startButton.addEventListener('click', () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const frequency = parseFloat(frequencyInput.value);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>startTone(frequency);</p>
+<p class="p1">});</p>
+<p class="p2"><br></p>
+<p class="p1">stopButton.addEventListener('click', stopTone);</p>
+<p class="p2"><br></p>
+<p class="p1">function render() {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>drawScene(gl, programInfo, buffers);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>requestAnimationFrame(render);</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">render();</p>
+</body>
+</html>
